@@ -109,51 +109,25 @@ pub async fn seed(db: &DbConn) -> Result<(), DbErr> {
     Ok(())
 }
 
-async fn create_agent_table(db: &DbConn) -> Result<(), DbErr> {
-    let schema = Schema::new(DbBackend::Sqlite);
-    let stmt: TableCreateStatement = schema.create_table_from_entity(models::agent::Entity);
-    db.execute(db.get_database_backend().build(&stmt)).await?;
-    Ok(())
-}
-
-async fn create_commodity_table(db: &DbConn) -> Result<(), DbErr> {
-    let schema = Schema::new(DbBackend::Sqlite);
-    let stmt: TableCreateStatement = schema.create_table_from_entity(models::commodity::Entity);
-    db.execute(db.get_database_backend().build(&stmt)).await?;
-    Ok(())
-}
-
-async fn create_inventory_table(db: &DbConn) -> Result<(), DbErr> {
-    let schema = Schema::new(DbBackend::Sqlite);
-    let stmt: TableCreateStatement = schema.create_table_from_entity(models::inventory::Entity);
-    db.execute(db.get_database_backend().build(&stmt)).await?;
-    Ok(())
-}
-
-async fn create_production_strategy_table(db: &DbConn) -> Result<(), DbErr> {
-    let schema = Schema::new(DbBackend::Sqlite);
-    let stmt: TableCreateStatement =
-        schema.create_table_from_entity(models::production_strategy::Entity);
-    db.execute(db.get_database_backend().build(&stmt)).await?;
-    Ok(())
-}
-
-async fn create_production_requirement_table(db: &DbConn) -> Result<(), DbErr> {
-    let schema = Schema::new(DbBackend::Sqlite);
-    let stmt: TableCreateStatement =
-        schema.create_table_from_entity(models::production_requirement::Entity);
-    db.execute(db.get_database_backend().build(&stmt)).await?;
-    Ok(())
+macro_rules! create_table {
+    ($db:ident, $entity:path) => {
+        async {
+            let schema = Schema::new(DbBackend::Sqlite);
+            let stmt: TableCreateStatement = schema.create_table_from_entity($entity);
+            $db.execute($db.get_database_backend().build(&stmt)).await
+        }
+    };
 }
 
 pub async fn setup(db: &DbConn) -> Result<(), DbErr> {
     futures::try_join!(
-        create_agent_table(db),
-        create_commodity_table(db),
-        create_inventory_table(db),
-        create_production_strategy_table(db),
-        create_production_requirement_table(db),
+        create_table!(db, models::agent::Entity),
+        create_table!(db, models::commodity::Entity),
+        create_table!(db, models::inventory::Entity),
+        create_table!(db, models::production_strategy::Entity),
+        create_table!(db, models::production_requirement::Entity),
     )?;
+
     Ok(())
 }
 
